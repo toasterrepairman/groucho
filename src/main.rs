@@ -1,5 +1,7 @@
 extern crate gtk;
 use gtk::prelude::*;
+use gdk::{keys::constants as key};
+use std::path::Path;
 use gtk::{Application, ApplicationWindow, MenuButton, Box, Button, Image, TextTagTable, Menu, MenuBar, Adjustment, MenuItem, Orientation, Paned, Separator, SpinButton, TextView, TextBuffer};
 
 fn main() {
@@ -78,9 +80,29 @@ fn build_ui(application: &Application) {
     let spin_button = SpinButton::with_range(1.0, 8.0, 1.0);
     right_box.pack_start(&spin_button, false, true, 0);
 
+    // Connect signals
+    window.connect_delete_event(|_, _| {
+        gtk::main_quit();
+        Inhibit(false)
+    });
+
+    window.connect_key_press_event(|_, event| {
+        if let Some(key) = event.keyval().into() {
+            if event.state().contains(gdk::ModifierType::CONTROL_MASK) && key == key::q {
+                gtk::main_quit();
+                Inhibit(true);
+            }
+        }
+        Inhibit(false)
+    });
+
     // Add the main vertical box to the application window
     window.add(&vbox);
 
     // Show all the widgets
     window.show_all();
+}
+
+fn infer() -> String {
+    return "".to_string()
 }

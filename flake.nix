@@ -69,6 +69,7 @@
                 pkgs.gdk-pixbuf
                 pkgs.gtk3
                 pkgs.openssl
+                pkgs.onnxruntime
               ];
               LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
               GTK_THEME="Nordic";
