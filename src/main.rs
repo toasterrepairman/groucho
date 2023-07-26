@@ -1,3 +1,5 @@
+mod infer;
+
 extern crate gtk;
 use gtk::prelude::*;
 use gdk::{keys::constants as key};
@@ -66,6 +68,7 @@ fn build_ui(application: &Application) {
     text_view.set_border_width(10);
     text_view.set_editable(true);
     text_view.set_monospace(true);
+    text_view.set_wrap_mode(gtk::WrapMode::Word);
     let text_buffer = TextBuffer::new(None::<&gtk::TextTagTable>);
     text_view.set_buffer(Some(&text_buffer));
     let text_scroll = gtk::ScrolledWindow::new(None::<&Adjustment>, None::<&Adjustment>);
