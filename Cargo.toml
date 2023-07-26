@@ -9,4 +9,4 @@ edition = "2021"
 gtk = "0.17.1"
 gdk = "0.17.1"
 gio = "0.17.10"
-pyke-diffusers = { git = "https://github.com/pykeio/diffusers", rev = "5ddbc1af9f54f1e1734db6f33709924bfc9efe62", features = [ "stable-diffusion", "ort-onednn" ] }
+pyke-diffusers = "0.1.0"
