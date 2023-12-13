@@ -9,3 +9,15 @@ edition = "2021"
 gtk = "0.17.1"
 gdk = "0.17.1"
 gio = "0.17.10"
+candle = { git = "https://github.com/huggingface/candle.git", version = "0.3.1", package = "candle-core" }
+candle-examples = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
+candle-nn = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
+candle-transformers = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
+tracing-chrome = "0.7.1"
+tracing-subscriber = "0.3.17"
+clap = "4.4.7"
+hf-hub = "0.3.2"
+image = "*"
+tokenizers = "0.13.4"
+anyhow = "1.0.75"
+

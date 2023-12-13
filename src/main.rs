@@ -1,4 +1,4 @@
-mod infer;
+mod diffusion;
 
 extern crate gtk;
 use gtk::prelude::*;
@@ -82,6 +82,15 @@ fn build_ui(application: &Application) {
     // Create a spin button to choose the number of threads
     let spin_button = SpinButton::with_range(1.0, 8.0, 1.0);
     right_box.pack_start(&spin_button, false, true, 0);
+
+    // Create generation button
+    let generate_button = Button::with_label("Generate Image");
+    right_box.pack_end(&generate_button, false, true, 0);
+
+    generate_button.connect_clicked(move |_| {
+        // &text_view.set_progress_fraction(0.5);
+        println!("Clicked!")
+    });
 
     // Connect signals
     window.connect_delete_event(|_, _| {
