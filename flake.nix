@@ -2,84 +2,59 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     utils.url = "github:numtide/flake-utils";
-    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs = { self, nixpkgs, utils, rust-overlay, ... }@inputs:
+  outputs = { self, nixpkgs, utils, ... }@inputs:
     utils.lib.eachDefaultSystem
       (system:
         let
-          name = "groucho";
+          name = "catboy";
           pkgs = nixpkgs.legacyPackages.${system};
-          allSystems = [
-            "x86_64-linux" # 64-bit Intel/AMD Linux
-            "aarch64-linux" # 64-bit ARM Linux
-            "x86_64-darwin" # 64-bit Intel macOS
-            "aarch64-darwin" # 64-bit ARM macOS
-          ];
-
-          # Helper to provide system-specific attributes
-          forAllSystems = f: nixpkgs.lib.genAttrs allSystems (system: f {
-            pkgs = import nixpkgs { inherit system; };
-          });
-
-          dependencies = with pkgs; [
-            # for Rust
-            cargo
-            rustc
-            rust-analyzer
-            rustfmt
-            cmake
-            # for GTK
-            cairo
-            gdk-pixbuf
-            atk
-            gobject-introspection
-            graphene
-            gtk3.dev
-            gtksourceview5
-            libadwaita
-            openssl_legacy.dev
-            pandoc
-            pango
-            pkg-config
-            appstream-glib
-            polkit
-            gettext
-            desktop-file-utils
-            meson
-            git
-            wrapGAppsHook4
-            # for llama:
-            llvmPackages.libclang
-            llvmPackages.libcxxClang
-          ];
         in
         rec {
-          packages = forAllSystems ({ pkgs }: {
-            default = pkgs.rustPlatform.buildRustPackage {
-              name = "groucho";
-              src = ./.;
-              cargoLock = {
-                lockFile = ./Cargo.lock;
-              };
-              # why is it like this
-              nativeBuildInputs = dependencies;
-              buildInputs = [
-                pkgs.gdk-pixbuf
-                pkgs.gtk3
-                pkgs.openssl
-                pkgs.onnxruntime
-              ];
-              LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
-              # ORT_STRATEGY = "download";
-              RUST_SRC_PATH = pkgs.rustPlatform.rustLibSrc;
-              BINDGEN_EXTRA_CLANG_ARGS = "-isystem ${pkgs.llvmPackages.libclang.lib}/lib/clang/${pkgs.lib.getVersion pkgs.clang}/include";
-            };
-          });
+          packages.${name} = pkgs.callPackage ./default.nix {
+            inherit (inputs);
+          };
 
           # `nix build`
-          defaultPackage = packages.${system}.default;
+          defaultPackage = packages.${name};
+
+          # `nix run`
+          apps.${name} = utils.lib.mkApp {
+            inherit name;
+            drv = packages.${name};
+          };
+          defaultApp = packages.${name};
+
+          # `nix develop`
+          devShells = {
+            default = pkgs.mkShell {
+              nativeBuildInputs =
+                with pkgs; [
+                  rustc
+                  cargo
+                  cairo
+                  gdk-pixbuf
+                  gobject-introspection
+                  graphene
+                  gtk3.dev
+                  gtksourceview5
+                  libadwaita
+                  openssl
+                  pandoc
+                  pango
+                  pkg-config
+                  appstream-glib
+                  polkit
+                  gettext
+                  desktop-file-utils
+                  meson
+                  ninja
+                  git
+                  wrapGAppsHook4
+                ];
+            };
+          };
         }
       );
 }
