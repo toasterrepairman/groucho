@@ -555,4 +555,3 @@ pub fn generate_image(prompt: &str, cpu: bool) -> Result<()> {
     }
     Ok(())
 }
-

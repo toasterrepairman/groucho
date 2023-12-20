@@ -108,6 +108,17 @@ fn build_ui(application: &Application) {
         Inhibit(false)
     });
 
+    // ctrl + enter for infer
+    window.connect_key_press_event(move |_, event| {
+        if let Some(key) = event.keyval().into() {
+            if event.state().contains(gdk::ModifierType::CONTROL_MASK) && key == key::Return {
+                generate_button.clicked();
+                Inhibit(true);
+            }
+        }
+        Inhibit(false)
+    });
+
     // Add the main vertical box to the application window
     window.add(&vbox);
 
