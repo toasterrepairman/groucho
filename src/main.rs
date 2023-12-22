@@ -4,7 +4,7 @@ extern crate gtk;
 use gtk::prelude::*;
 use gdk::{keys::constants as key};
 use std::path::Path;
-use gtk::{Application, ApplicationWindow, MenuButton, Box, Button, Image, TextTagTable, Menu, MenuBar, Adjustment, MenuItem, Orientation, Paned, Separator, SpinButton, TextView, TextBuffer};
+use gtk::{Application, Popover, ApplicationWindow, MenuButton, Box, Button, Image, TextTagTable, Menu, MenuBar, Adjustment, MenuItem, Orientation, Paned, Separator, SpinButton, TextView, TextBuffer};
 
 fn main() {
     // Initialize the GTK application
@@ -34,13 +34,24 @@ fn build_ui(application: &Application) {
     let save_button = Button::with_label("Save");
     header_bar.pack_start(&save_button);
 
-    // Create the menu button on the right side of the header bar
-    let menu_button = MenuButton::new();
-    let menu = Menu::new();
-    let menu_item = MenuItem::with_label("Menu Item");
-    menu.append(&menu_item);
-    menu_button.set_popup(Some(&menu));
+    // Create a button to trigger the popover
+    let menu_button = Button::with_label("Menu Button");
+
+    // Create a popover
+    let popover = Popover::new(Some(&menu_button));
+
+    // Create a menu item inside the popover
+    let menu_item = Button::with_label("Menu Item");
+    popover.add(&menu_item);
+
+    // Add the button to the header bar (or wherever you want)
     header_bar.pack_end(&menu_button);
+        
+    // Connect the popover to the button
+    menu_button.connect_clicked(move |_| {
+        popover.show_all();
+    });
+
 
     // Add the header bar to the application window
     window.set_titlebar(Some(&header_bar));
@@ -98,6 +109,7 @@ fn build_ui(application: &Application) {
         Inhibit(false)
     });
 
+    // close window keybind
     window.connect_key_press_event(|_, event| {
         if let Some(key) = event.keyval().into() {
             if event.state().contains(gdk::ModifierType::CONTROL_MASK) && key == key::q {
