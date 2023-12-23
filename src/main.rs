@@ -4,7 +4,8 @@ extern crate gtk;
 use gtk::prelude::*;
 use gdk::{keys::constants as key};
 use std::path::Path;
-use gtk::{Application, Popover, ApplicationWindow, MenuButton, Box, Button, Image, TextTagTable, Menu, MenuBar, Adjustment, MenuItem, Orientation, Paned, Separator, SpinButton, TextView, TextBuffer};
+use gtk::{Application, Grid, Switch, ComboBoxText, Popover, ApplicationWindow, MenuButton, Box, Button, Image, TextTagTable, Menu, MenuBar, Adjustment, MenuItem, Orientation, Paned, Separator, SpinButton, TextView, TextBuffer};
+use crate::diffusion::{generate_image, download_weights_for_config, StableDiffusionVersion};
 
 fn main() {
     // Initialize the GTK application
@@ -35,14 +36,47 @@ fn build_ui(application: &Application) {
     header_bar.pack_start(&save_button);
 
     // Create a button to trigger the popover
-    let menu_button = Button::with_label("Menu Button");
+    let menu_button = Button::with_label("Settings");
 
-    // Create a popover
+    // Create the popover
     let popover = Popover::new(Some(&menu_button));
 
+    // Create a grid to organize widgets with labels
+    let grid = Grid::new();
+    grid.set_column_spacing(10);
+    grid.set_row_spacing(10);
+    grid.set_border_width(5);
+    popover.add(&grid);
+
+    // Add a label and toggle switch for "f16"
+    let label_f16 = gtk::Label::new(Some("Use f16:"));
+    let toggle_switch = Switch::new();
+    grid.attach(&label_f16, 0, 0, 1, 1);
+    grid.attach_next_to(&toggle_switch, Some(&label_f16), gtk::PositionType::Right, 1, 1);
+    toggle_switch.set_halign(gtk::Align::Center);
+
+    // Add a label and combobox for version selection
+    let label_version = gtk::Label::new(Some("Stable Diffusion\nVersion:"));
+    let combobox = ComboBoxText::new();
+    grid.attach_next_to(&label_version, Some(&label_f16), gtk::PositionType::Bottom, 1, 1);
+    grid.attach_next_to(&combobox, Some(&label_version), gtk::PositionType::Right, 1, 1);
+
+    // Add enum options to the combobox
+    for version in &[
+        StableDiffusionVersion::V1_5,
+        StableDiffusionVersion::V2_1,
+        StableDiffusionVersion::Xl,
+        StableDiffusionVersion::Turbo,
+        // ... add more versions as needed
+    ] {
+        combobox.append_text(&format!("{:?}", version));
+    }
+
+    combobox.set_active(Some(3));
+    
     // Create a menu item inside the popover
-    let menu_item = Button::with_label("Menu Item");
-    popover.add(&menu_item);
+    let menu_item = Button::with_label("Download Weights");
+    grid.attach_next_to(&menu_item, Some(&combobox), gtk::PositionType::Bottom, 1, 1);
 
     // Add the button to the header bar (or wherever you want)
     header_bar.pack_end(&menu_button);
@@ -51,7 +85,26 @@ fn build_ui(application: &Application) {
     menu_button.connect_clicked(move |_| {
         popover.show_all();
     });
+    
+    // Connect the popover to the button
+    menu_item.connect_clicked(move |_| {
+        // Get the selected version from the combobox
+        let version_str = combobox.active_text().expect("No version selected!");
+        let version = match version_str.as_str() {
+            "V1_5" => StableDiffusionVersion::V1_5,
+            "V2_1" => StableDiffusionVersion::V2_1,
+            "Xl" => StableDiffusionVersion::Xl,
+            "Turbo" => StableDiffusionVersion::Turbo,
+            // Handle other enum variants as needed
+            _ => panic!("Invalid version selected!"),
+        };
 
+        // Get the boolean value from the toggle switch
+        let is_enabled = toggle_switch.is_active();
+
+        // Call the function with the selected version and boolean value
+        download_weights_for_config(version, is_enabled);
+    });
 
     // Add the header bar to the application window
     window.set_titlebar(Some(&header_bar));
@@ -72,6 +125,7 @@ fn build_ui(application: &Application) {
 
     // Create a vertical box to hold the text entry and spin button on the right side of the paned
     let right_box = Box::new(Orientation::Vertical, 0);
+    right_box.set_border_width(5);
     paned.pack2(&right_box, true, false);
 
     // Create a text entry at the top of the right box
@@ -88,10 +142,12 @@ fn build_ui(application: &Application) {
 
     // Create a separator below the text entry
     let separator = Separator::new(Orientation::Horizontal);
+    separator.set_margin_bottom(5);
     right_box.pack_start(&separator, false, true, 0);
 
     // Create a spin button to choose the number of threads
     let spin_button = SpinButton::with_range(1.0, 8.0, 1.0);
+    spin_button.set_margin_bottom(5);
     right_box.pack_start(&spin_button, false, true, 0);
 
     // Create generation button
@@ -100,7 +156,7 @@ fn build_ui(application: &Application) {
 
     generate_button.connect_clicked(move |_| {
         // &text_view.set_progress_fraction(0.5);
-        println!("Clicked!")
+        generate_image("An image of a robot on a beach.", true);
     });
 
     // Connect signals

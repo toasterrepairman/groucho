@@ -99,7 +99,7 @@ struct Args {
 }
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum, PartialEq, Eq)]
-enum StableDiffusionVersion {
+pub enum StableDiffusionVersion {
     V1_5,
     V2_1,
     Xl,
@@ -550,8 +550,32 @@ pub fn generate_image(prompt: &str, cpu: bool) -> Result<()> {
         let image = vae.decode(&(&latents / vae_scale)?)?;
         let image = ((image / 2.)? + 0.5)?.to_device(&Device::Cpu)?;
         let image = (image.clamp(0f32, 1.)? * 255.)?.to_dtype(DType::U8)?.i(0)?;
-        let image_filename = output_filename(&final_image, idx + 1, num_samples, None);
+        let image_filename = "groucho.png";
         candle_examples::save_image(&image, image_filename)?
     }
+    Ok(())
+}
+
+pub fn download_weights_for_config(
+    sd_version: StableDiffusionVersion,
+    use_f16: bool,
+) -> Result<()> {
+    let args = Args::parse();
+
+    let Args {
+        vae_weights,
+        unet_weights,
+        ..
+    } = args;
+
+    println!("Downloading weights for the specified configuration...");
+
+    // Logic to download weights based on sd_version and use_f16.
+    let vae_weights_path = ModelFile::Vae.get(vae_weights, sd_version, use_f16)?;
+    let unet_weights_path = ModelFile::Unet.get(unet_weights, sd_version, use_f16)?;
+
+    println!("Downloaded VAE weights: {:?}", vae_weights_path);
+    println!("Downloaded UNet weights: {:?}", unet_weights_path);
+
     Ok(())
 }
