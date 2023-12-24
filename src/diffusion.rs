@@ -349,11 +349,9 @@ fn image_preprocess<T: AsRef<std::path::Path>>(path: T) -> anyhow::Result<Tensor
     Ok(img)
 }
 
-pub fn generate_image(prompt: &str, cpu: bool) -> Result<()> {
+pub fn generate_image(prompt: &str, cpu: bool, f16: bool, sd_version: StableDiffusionVersion) -> Result<()> {
     use tracing_chrome::ChromeLayerBuilder;
     use tracing_subscriber::prelude::*;
-
-    let sd_version = StableDiffusionVersion::Turbo;
 
     let args = Args::parse();
     
@@ -411,7 +409,7 @@ pub fn generate_image(prompt: &str, cpu: bool) -> Result<()> {
             StableDiffusionVersion::Turbo => 1,
         },
     };
-    let dtype = if use_f16 { DType::F16 } else { DType::F32 };
+    let dtype = if f16 { DType::F16 } else { DType::F32 };
     let sd_config = match sd_version {
         StableDiffusionVersion::V1_5 => {
             stable_diffusion::StableDiffusionConfig::v1_5(sliced_attention_size, height, width)
@@ -447,7 +445,7 @@ pub fn generate_image(prompt: &str, cpu: bool) -> Result<()> {
                 clip_weights.clone(),
                 sd_version,
                 &sd_config,
-                use_f16,
+                f16,
                 &device,
                 dtype,
                 use_guide_scale,

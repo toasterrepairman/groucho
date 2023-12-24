@@ -20,4 +20,3 @@ hf-hub = "0.3.2"
 image = "*"
 tokenizers = "0.13.4"
 anyhow = "1.0.75"
-

@@ -54,12 +54,17 @@ fn build_ui(application: &Application) {
     grid.attach(&label_f16, 0, 0, 1, 1);
     grid.attach_next_to(&toggle_switch, Some(&label_f16), gtk::PositionType::Right, 1, 1);
     toggle_switch.set_halign(gtk::Align::Center);
+    toggle_switch.set_active(true);
 
     // Add a label and combobox for version selection
     let label_version = gtk::Label::new(Some("Stable Diffusion\nVersion:"));
     let combobox = ComboBoxText::new();
     grid.attach_next_to(&label_version, Some(&label_f16), gtk::PositionType::Bottom, 1, 1);
     grid.attach_next_to(&combobox, Some(&label_version), gtk::PositionType::Right, 1, 1);
+
+    // Create clones
+    let clone_switch = toggle_switch.clone();
+    let clone_combo = combobox.clone();
 
     // Add enum options to the combobox
     for version in &[
@@ -78,6 +83,13 @@ fn build_ui(application: &Application) {
     let menu_item = Button::with_label("Download Weights");
     grid.attach_next_to(&menu_item, Some(&combobox), gtk::PositionType::Bottom, 1, 1);
 
+    let cache_button = Button::with_label("Cache");
+    grid.attach_next_to(&cache_button, Some(&menu_item), gtk::PositionType::Left, 1, 1);
+   
+    // Connect the button click event to open the file manager at the specified path
+    cache_button.connect_clicked(move |_| {
+    });
+    
     // Add the button to the header bar (or wherever you want)
     header_bar.pack_end(&menu_button);
         
@@ -89,7 +101,7 @@ fn build_ui(application: &Application) {
     // Connect the popover to the button
     menu_item.connect_clicked(move |_| {
         // Get the selected version from the combobox
-        let version_str = combobox.active_text().expect("No version selected!");
+        let version_str = &combobox.active_text().expect("No version selected!");
         let version = match version_str.as_str() {
             "V1_5" => StableDiffusionVersion::V1_5,
             "V2_1" => StableDiffusionVersion::V2_1,
@@ -150,13 +162,19 @@ fn build_ui(application: &Application) {
     spin_button.set_margin_bottom(5);
     right_box.pack_start(&spin_button, false, true, 0);
 
+    // Load variables
+    let prompt: String = text_buffer.text(&text_buffer.start_iter(), &text_buffer.start_iter(), true).unwrap().to_string();
+    // let cpu = cpu_toggle_switch.is_active();
+    let f16 = clone_switch.is_active();
+    let sd_version = get_selected_sd_version(&clone_combo);
+
     // Create generation button
     let generate_button = Button::with_label("Generate Image");
     right_box.pack_end(&generate_button, false, true, 0);
 
     generate_button.connect_clicked(move |_| {
         // &text_view.set_progress_fraction(0.5);
-        generate_image("An image of a robot on a beach.", true);
+        generate_image(&prompt, true, f16, get_selected_sd_version(&clone_combo));
     });
 
     // Connect signals
@@ -194,6 +212,18 @@ fn build_ui(application: &Application) {
     window.show_all();
 }
 
-fn infer() -> String {
-    return "".to_string()
+// Helper function to get the selected StableDiffusionVersion from the combobox
+fn get_selected_sd_version(combobox: &ComboBoxText) -> StableDiffusionVersion {
+    if let Some(active_text) = combobox.active_text() {
+        match active_text.as_str() {
+            "V1_5" => StableDiffusionVersion::V1_5,
+            "V2_1" => StableDiffusionVersion::V2_1,
+            "Xl" => StableDiffusionVersion::Xl,
+            "Turbo" => StableDiffusionVersion::Turbo,
+            _ => panic!("Invalid version selected!"),
+        }
+    } else {
+        panic!("No version selected!");
+    }
 }
+
