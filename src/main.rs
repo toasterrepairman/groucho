@@ -43,45 +43,14 @@ fn build_ui(application: &Application) {
 
     // Create a grid to organize widgets with labels
     let grid = Grid::new();
-    grid.set_column_spacing(10);
-    grid.set_row_spacing(10);
+    grid.set_column_spacing(5);
+    grid.set_row_spacing(5);
     grid.set_border_width(5);
     popover.add(&grid);
-
-    // Add a label and toggle switch for "f16"
-    let label_f16 = gtk::Label::new(Some("Use f16:"));
-    let toggle_switch = Switch::new();
-    grid.attach(&label_f16, 0, 0, 1, 1);
-    grid.attach_next_to(&toggle_switch, Some(&label_f16), gtk::PositionType::Right, 1, 1);
-    toggle_switch.set_halign(gtk::Align::Center);
-    toggle_switch.set_active(true);
-
-    // Add a label and combobox for version selection
-    let label_version = gtk::Label::new(Some("Stable Diffusion\nVersion:"));
-    let combobox = ComboBoxText::new();
-    grid.attach_next_to(&label_version, Some(&label_f16), gtk::PositionType::Bottom, 1, 1);
-    grid.attach_next_to(&combobox, Some(&label_version), gtk::PositionType::Right, 1, 1);
-
-    // Create clones
-    let clone_switch = toggle_switch.clone();
-    let clone_combo = combobox.clone();
-
-    // Add enum options to the combobox
-    for version in &[
-        StableDiffusionVersion::V1_5,
-        StableDiffusionVersion::V2_1,
-        StableDiffusionVersion::Xl,
-        StableDiffusionVersion::Turbo,
-        // ... add more versions as needed
-    ] {
-        combobox.append_text(&format!("{:?}", version));
-    }
-
-    combobox.set_active(Some(3));
-    
+   
     // Create a menu item inside the popover
     let menu_item = Button::with_label("Download Weights");
-    grid.attach_next_to(&menu_item, Some(&combobox), gtk::PositionType::Bottom, 1, 1);
+    grid.attach(&menu_item, 0, 0, 1, 1);
 
     let cache_button = Button::with_label("Cache");
     grid.attach_next_to(&cache_button, Some(&menu_item), gtk::PositionType::Left, 1, 1);
@@ -96,26 +65,6 @@ fn build_ui(application: &Application) {
     // Connect the popover to the button
     menu_button.connect_clicked(move |_| {
         popover.show_all();
-    });
-    
-    // Connect the popover to the button
-    menu_item.connect_clicked(move |_| {
-        // Get the selected version from the combobox
-        let version_str = &combobox.active_text().expect("No version selected!");
-        let version = match version_str.as_str() {
-            "V1_5" => StableDiffusionVersion::V1_5,
-            "V2_1" => StableDiffusionVersion::V2_1,
-            "Xl" => StableDiffusionVersion::Xl,
-            "Turbo" => StableDiffusionVersion::Turbo,
-            // Handle other enum variants as needed
-            _ => panic!("Invalid version selected!"),
-        };
-
-        // Get the boolean value from the toggle switch
-        let is_enabled = toggle_switch.is_active();
-
-        // Call the function with the selected version and boolean value
-        download_weights_for_config(version, is_enabled);
     });
 
     // Add the header bar to the application window
@@ -136,8 +85,9 @@ fn build_ui(application: &Application) {
     paned.pack1(&image_scroll, true, false);
 
     // Create a vertical box to hold the text entry and spin button on the right side of the paned
-    let right_box = Box::new(Orientation::Vertical, 0);
+    let right_box = Grid::new();
     right_box.set_border_width(5);
+    right_box.set_hexpand(true);
     paned.pack2(&right_box, true, false);
 
     // Create a text entry at the top of the right box
@@ -146,35 +96,107 @@ fn build_ui(application: &Application) {
     text_view.set_editable(true);
     text_view.set_monospace(true);
     text_view.set_wrap_mode(gtk::WrapMode::Word);
+    text_view.set_hexpand(true);
     let text_buffer = TextBuffer::new(None::<&gtk::TextTagTable>);
     text_view.set_buffer(Some(&text_buffer));
     let text_scroll = gtk::ScrolledWindow::new(None::<&Adjustment>, None::<&Adjustment>);
     text_scroll.add(&text_view);
-    right_box.pack_start(&text_scroll, true, true, 0);
+    text_scroll.set_hexpand(true);
+    text_scroll.set_vexpand(true);
+    right_box.attach(&text_scroll, 0, 0, 2, 1);;
 
     // Create a separator below the text entry
     let separator = Separator::new(Orientation::Horizontal);
     separator.set_margin_bottom(5);
-    right_box.pack_start(&separator, false, true, 0);
+    right_box.attach_next_to(&separator, Some(&text_scroll), gtk::PositionType::Bottom, 2, 1);
 
-    // Create a spin button to choose the number of threads
-    let spin_button = SpinButton::with_range(1.0, 8.0, 1.0);
+    // create Switchboard
+    let switchboard = gtk::Box::new(Orientation::Horizontal, 0);
+    right_box.attach_next_to(&switchboard, Some(&separator), gtk::PositionType::Bottom, 2, 1);
+
+    // Add a label and toggle switch for "f16"
+    let label_f16 = gtk::Label::new(Some("Use f16:"));
+    let toggle_switch = Switch::new();
+    switchboard.pack_start(&label_f16, false, false, 5);
+    switchboard.pack_start(&toggle_switch, false, false, 5);
+    toggle_switch.set_halign(gtk::Align::Center);
+
+    // Add a label and toggle switch for "f16"
+    let label_CPU = gtk::Label::new(Some("Use CPU:"));
+    let toggle_CPU = Switch::new();
+    switchboard.pack_start(&label_CPU, false, false, 5);
+    switchboard.pack_start(&toggle_CPU, false, false, 5);
+    toggle_CPU.set_halign(gtk::Align::Center);
+
+    // Add a label and combobox for version selection
+    let label_version = gtk::Label::new(Some("Stable Diffusion\nVersion:"));
+    let combobox = ComboBoxText::new();
+    combobox.set_border_width(5);
+    right_box.attach_next_to(&label_version, Some(&switchboard), gtk::PositionType::Bottom, 1, 1);
+    right_box.attach_next_to(&combobox, Some(&label_version), gtk::PositionType::Right, 1, 1);
+
+    // Create a spin button to choose the number of samples
+    let spin_button = SpinButton::with_range(1.0, 50.0, 1.0);
     spin_button.set_margin_bottom(5);
-    right_box.pack_start(&spin_button, false, true, 0);
+    let spinlabel = gtk::Label::new(Some("Samples:"));
+    right_box.attach_next_to(&spinlabel, Some(&label_version), gtk::PositionType::Bottom, 1, 1);
+    right_box.attach_next_to(&spin_button, Some(&spinlabel), gtk::PositionType::Right, 1, 1);
 
     // Load variables
     let prompt: String = text_buffer.text(&text_buffer.start_iter(), &text_buffer.start_iter(), true).unwrap().to_string();
     // let cpu = cpu_toggle_switch.is_active();
-    let f16 = clone_switch.is_active();
-    let sd_version = get_selected_sd_version(&clone_combo);
 
     // Create generation button
     let generate_button = Button::with_label("Generate Image");
-    right_box.pack_end(&generate_button, false, true, 0);
+    right_box.attach_next_to(&generate_button, Some(&spinlabel), gtk::PositionType::Bottom, 2, 1);
 
+    // Add enum options to the combobox
+    for version in &[
+        StableDiffusionVersion::V1_5,
+        StableDiffusionVersion::V2_1,
+        StableDiffusionVersion::Xl,
+        StableDiffusionVersion::Turbo,
+        // ... add more versions as needed
+    ] {
+        combobox.append_text(&format!("{:?}", version));
+    }
+
+    // Set settings
+    combobox.set_active(Some(3));
+    toggle_switch.set_active(true);
+    toggle_CPU.set_active(true);
+
+
+    // Create clones
+    let clone_switch = toggle_switch.clone();
+
+    let clone_combo0 = combobox.clone();
+    // Connect the popover to the button
+    menu_item.connect_clicked(move |_| {
+        // Get the selected version from the combobox
+        let version_str = &clone_combo0.active_text().expect("No version selected!");
+        let version = match version_str.as_str() {
+            "V1_5" => StableDiffusionVersion::V1_5,
+            "V2_1" => StableDiffusionVersion::V2_1,
+            "Xl" => StableDiffusionVersion::Xl,
+            "Turbo" => StableDiffusionVersion::Turbo,
+            // Handle other enum variants as needed
+            _ => panic!("Invalid version selected!"),
+        };
+
+        // Get the boolean value from the toggle switch
+        let is_enabled = toggle_switch.is_active();
+
+        // Call the function with the selected version and boolean value
+        download_weights_for_config(version, is_enabled);
+    });
+
+    let clone_combo1 = combobox.clone();
     generate_button.connect_clicked(move |_| {
         // &text_view.set_progress_fraction(0.5);
-        generate_image(&prompt, true, f16, get_selected_sd_version(&clone_combo));
+        let f16 = clone_switch.is_active();
+        let sd_version = get_selected_sd_version(&clone_combo1);
+        generate_image(&prompt, true, f16, get_selected_sd_version(&clone_combo1));
     });
 
     // Connect signals
@@ -192,6 +214,11 @@ fn build_ui(application: &Application) {
             }
         }
         Inhibit(false)
+    });
+
+    // changes spinnerwheel
+    combobox.connect_changed(move |_| {
+        
     });
 
     // ctrl + enter for infer
