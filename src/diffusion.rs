@@ -8,7 +8,7 @@ use candle_transformers::models::stable_diffusion;
 
 use anyhow::{Error as E, Result};
 use candle::{DType, Device, IndexOp, Module, Tensor, D};
-use clap::Parser;
+use clap::{Parser, Arg};
 use tokenizers::Tokenizer;
 
 #[derive(Parser)]
@@ -378,7 +378,7 @@ pub fn generate_image(prompt: &str, cpu: bool, f16: bool, sd_version: StableDiff
         img2img_strength,
         ..
     } = args;
-   
+
     if !(0. ..=1.).contains(&img2img_strength) {
         anyhow::bail!("img2img-strength should be between 0 and 1, got {img2img_strength}")
     }
@@ -458,7 +458,7 @@ pub fn generate_image(prompt: &str, cpu: bool, f16: bool, sd_version: StableDiff
     println!("{text_embeddings:?}");
 
     println!("Building the autoencoder.");
-    let vae_weights = ModelFile::Vae.get(vae_weights, sd_version, use_f16)?;
+    let vae_weights = ModelFile::Vae.get(vae_weights, sd_version, f16)?;
     let vae = sd_config.build_vae(vae_weights, &device, dtype)?;
     let init_latent_dist = match &img2img {
         None => None,
@@ -468,7 +468,7 @@ pub fn generate_image(prompt: &str, cpu: bool, f16: bool, sd_version: StableDiff
         }
     };
     println!("Building the unet.");
-    let unet_weights = ModelFile::Unet.get(unet_weights, sd_version, use_f16)?;
+    let unet_weights = ModelFile::Unet.get(unet_weights, sd_version, f16)?;
     let unet = sd_config.build_unet(unet_weights, &device, 4, use_flash_attn, dtype)?;
 
     let t_start = if img2img.is_some() {

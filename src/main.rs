@@ -117,19 +117,19 @@ fn build_ui(application: &Application) {
     // Add a label and toggle switch for "f16"
     let label_f16 = gtk::Label::new(Some("Use f16:"));
     let toggle_switch = Switch::new();
-    switchboard.pack_start(&label_f16, false, false, 5);
+    switchboard.pack_start(&label_f16, true, false, 5);
     switchboard.pack_start(&toggle_switch, false, false, 5);
     toggle_switch.set_halign(gtk::Align::Center);
 
     // Add a label and toggle switch for "f16"
     let label_CPU = gtk::Label::new(Some("Use CPU:"));
     let toggle_CPU = Switch::new();
-    switchboard.pack_start(&label_CPU, false, false, 5);
+    switchboard.pack_start(&label_CPU, true, false, 5);
     switchboard.pack_start(&toggle_CPU, false, false, 5);
     toggle_CPU.set_halign(gtk::Align::Center);
 
     // Add a label and combobox for version selection
-    let label_version = gtk::Label::new(Some("Stable Diffusion\nVersion:"));
+    let label_version = gtk::Label::new(Some("Version:"));
     let combobox = ComboBoxText::new();
     combobox.set_border_width(5);
     right_box.attach_next_to(&label_version, Some(&switchboard), gtk::PositionType::Bottom, 1, 1);
@@ -166,11 +166,9 @@ fn build_ui(application: &Application) {
     toggle_switch.set_active(true);
     toggle_CPU.set_active(true);
 
-
     // Create clones
-    let clone_switch = toggle_switch.clone();
-
     let clone_combo0 = combobox.clone();
+    let clone_f16 = toggle_switch.clone();
     // Connect the popover to the button
     menu_item.connect_clicked(move |_| {
         // Get the selected version from the combobox
@@ -185,7 +183,7 @@ fn build_ui(application: &Application) {
         };
 
         // Get the boolean value from the toggle switch
-        let is_enabled = toggle_switch.is_active();
+        let is_enabled = clone_f16.is_active();
 
         // Call the function with the selected version and boolean value
         download_weights_for_config(version, is_enabled);
@@ -194,9 +192,10 @@ fn build_ui(application: &Application) {
     let clone_combo1 = combobox.clone();
     generate_button.connect_clicked(move |_| {
         // &text_view.set_progress_fraction(0.5);
-        let f16 = clone_switch.is_active();
+        let f16 = toggle_switch.is_active();
+        let cpu = toggle_CPU.is_active();
         let sd_version = get_selected_sd_version(&clone_combo1);
-        generate_image(&prompt, true, f16, get_selected_sd_version(&clone_combo1));
+        generate_image(&prompt, cpu, f16, sd_version);
     });
 
     // Connect signals
