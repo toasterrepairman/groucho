@@ -349,7 +349,7 @@ fn image_preprocess<T: AsRef<std::path::Path>>(path: T) -> anyhow::Result<Tensor
     Ok(img)
 }
 
-pub fn generate_image(prompt: &str, cpu: bool, f16: bool, sd_version: StableDiffusionVersion) -> Result<()> {
+pub fn generate_image(input: &str, cpu: bool, f16: bool, sd_version: StableDiffusionVersion) -> Result<()> {
     use tracing_chrome::ChromeLayerBuilder;
     use tracing_subscriber::prelude::*;
 
@@ -439,7 +439,7 @@ pub fn generate_image(prompt: &str, cpu: bool, f16: bool, sd_version: StableDiff
         .iter()
         .map(|first| {
             text_embeddings(
-                &prompt,
+                &input,
                 &uncond_prompt,
                 tokenizer.clone(),
                 clip_weights.clone(),

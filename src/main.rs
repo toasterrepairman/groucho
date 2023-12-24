@@ -4,7 +4,7 @@ extern crate gtk;
 use gtk::prelude::*;
 use gdk::{keys::constants as key};
 use std::path::Path;
-use gtk::{Application, Grid, Switch, ComboBoxText, Popover, ApplicationWindow, MenuButton, Box, Button, Image, TextTagTable, Menu, MenuBar, Adjustment, MenuItem, Orientation, Paned, Separator, SpinButton, TextView, TextBuffer};
+use gtk::{Application, Spinner, Grid, Switch, ComboBoxText, Popover, ApplicationWindow, MenuButton, Box, Button, Image, TextTagTable, Menu, MenuBar, Adjustment, MenuItem, Orientation, Paned, Separator, SpinButton, TextView, TextBuffer};
 use crate::diffusion::{generate_image, download_weights_for_config, StableDiffusionVersion};
 
 fn main() {
@@ -35,6 +35,10 @@ fn build_ui(application: &Application) {
     let save_button = Button::with_label("Save");
     header_bar.pack_start(&save_button);
 
+    // Create a spinner
+    let spinner = Spinner::new();
+    header_bar.pack_start(&spinner); // Add the spinner to the end of the header bar
+
     // Create a button to trigger the popover
     let menu_button = Button::with_label("Settings");
 
@@ -57,6 +61,7 @@ fn build_ui(application: &Application) {
    
     // Connect the button click event to open the file manager at the specified path
     cache_button.connect_clicked(move |_| {
+
     });
     
     // Add the button to the header bar (or wherever you want)
@@ -131,7 +136,8 @@ fn build_ui(application: &Application) {
     // Add a label and combobox for version selection
     let label_version = gtk::Label::new(Some("Version:"));
     let combobox = ComboBoxText::new();
-    combobox.set_border_width(5);
+    combobox.set_margin_top(5);
+    combobox.set_margin_bottom(5);
     right_box.attach_next_to(&label_version, Some(&switchboard), gtk::PositionType::Bottom, 1, 1);
     right_box.attach_next_to(&combobox, Some(&label_version), gtk::PositionType::Right, 1, 1);
 
@@ -143,7 +149,6 @@ fn build_ui(application: &Application) {
     right_box.attach_next_to(&spin_button, Some(&spinlabel), gtk::PositionType::Right, 1, 1);
 
     // Load variables
-    let prompt: String = text_buffer.text(&text_buffer.start_iter(), &text_buffer.start_iter(), true).unwrap().to_string();
     // let cpu = cpu_toggle_switch.is_active();
 
     // Create generation button
@@ -191,11 +196,15 @@ fn build_ui(application: &Application) {
 
     let clone_combo1 = combobox.clone();
     generate_button.connect_clicked(move |_| {
+        spinner.start();
         // &text_view.set_progress_fraction(0.5);
+        let prompt: String = text_buffer.text(&text_buffer.start_iter(), &text_buffer.end_iter(), true).unwrap().to_string();
         let f16 = toggle_switch.is_active();
         let cpu = toggle_CPU.is_active();
         let sd_version = get_selected_sd_version(&clone_combo1);
         generate_image(&prompt, cpu, f16, sd_version);
+        image.set_from_file(Some("groucho.png"));
+        spinner.stop();
     });
 
     // Connect signals
