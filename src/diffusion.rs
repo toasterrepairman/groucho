@@ -349,7 +349,7 @@ fn image_preprocess<T: AsRef<std::path::Path>>(path: T) -> anyhow::Result<Tensor
     Ok(img)
 }
 
-pub fn generate_image(input: &str, cpu: bool, f16: bool, sd_version: StableDiffusionVersion) -> Result<()> {
+pub fn generate_image(input: &str, cpu: bool, f16: bool, sd_version: StableDiffusionVersion, samplecount: usize, guidance: Option<f64>) -> Result<()> {
     use tracing_chrome::ChromeLayerBuilder;
     use tracing_subscriber::prelude::*;
 
@@ -391,24 +391,9 @@ pub fn generate_image(input: &str, cpu: bool, f16: bool, sd_version: StableDiffu
         None
     };
 
-    let guidance_scale = match guidance_scale {
-        Some(guidance_scale) => guidance_scale,
-        None => match sd_version {
-            StableDiffusionVersion::V1_5
-            | StableDiffusionVersion::V2_1
-            | StableDiffusionVersion::Xl => 7.5,
-            StableDiffusionVersion::Turbo => 0.,
-        },
-    };
-    let n_steps = match n_steps {
-        Some(n_steps) => n_steps,
-        None => match sd_version {
-            StableDiffusionVersion::V1_5
-            | StableDiffusionVersion::V2_1
-            | StableDiffusionVersion::Xl => 30,
-            StableDiffusionVersion::Turbo => 1,
-        },
-    };
+    let guidance_scale = Some(samplecount);
+    let samples = Some(samplecount);
+
     let dtype = if f16 { DType::F16 } else { DType::F32 };
     let sd_config = match sd_version {
         StableDiffusionVersion::V1_5 => {
@@ -427,9 +412,12 @@ pub fn generate_image(input: &str, cpu: bool, f16: bool, sd_version: StableDiffu
         ),
     };
 
-    let scheduler = sd_config.build_scheduler(n_steps)?;
+    let scheduler = sd_config.build_scheduler(samples.unwrap())?;
     let device = candle_examples::device(cpu)?;
-    let use_guide_scale = guidance_scale > 1.0;
+    let use_guide_scale = match guidance {
+        Some(value) => value > 1.0,
+        None => false,
+    };
 
     let which = match sd_version {
         StableDiffusionVersion::Xl | StableDiffusionVersion::Turbo => vec![true, false],
@@ -472,7 +460,7 @@ pub fn generate_image(input: &str, cpu: bool, f16: bool, sd_version: StableDiffu
     let unet = sd_config.build_unet(unet_weights, &device, 4, use_flash_attn, dtype)?;
 
     let t_start = if img2img.is_some() {
-        n_steps - (n_steps as f64 * img2img_strength) as usize
+        samples.unwrap() - (samples.unwrap() as f64 * img2img_strength) as usize
     } else {
         0
     };
@@ -530,14 +518,14 @@ pub fn generate_image(input: &str, cpu: bool, f16: bool, sd_version: StableDiffu
                 let noise_pred = noise_pred.chunk(2, 0)?;
                 let (noise_pred_uncond, noise_pred_text) = (&noise_pred[0], &noise_pred[1]);
 
-                (noise_pred_uncond + ((noise_pred_text - noise_pred_uncond)? * guidance_scale)?)?
+                (noise_pred_uncond + ((noise_pred_text - noise_pred_uncond)? * guidance.unwrap())?)?
             } else {
                 noise_pred
             };
 
             latents = scheduler.step(&noise_pred, timestep, &latents)?;
             let dt = start_time.elapsed().as_secs_f32();
-            println!("step {}/{n_steps} done, {:.2}s", timestep_index + 1, dt);
+            println!("sample done in {:.2}s", dt);
         }
 
         println!(

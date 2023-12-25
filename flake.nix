@@ -8,7 +8,7 @@
     utils.lib.eachDefaultSystem
       (system:
         let
-          name = "catboy";
+          name = "groucho";
           pkgs = nixpkgs.legacyPackages.${system};
         in
         rec {

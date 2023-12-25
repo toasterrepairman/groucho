@@ -108,7 +108,7 @@ fn build_ui(application: &Application) {
     text_scroll.add(&text_view);
     text_scroll.set_hexpand(true);
     text_scroll.set_vexpand(true);
-    right_box.attach(&text_scroll, 0, 0, 2, 1);;
+    right_box.attach(&text_scroll, 0, 0, 2, 1);
 
     // Create a separator below the text entry
     let separator = Separator::new(Orientation::Horizontal);
@@ -133,12 +133,25 @@ fn build_ui(application: &Application) {
     switchboard.pack_start(&toggle_CPU, false, false, 5);
     toggle_CPU.set_halign(gtk::Align::Center);
 
+    // Add guidance scale controls
+    let guidance_box = gtk::Box::new(Orientation::Horizontal, 0);
+    let guidance_label = gtk::Label::new(Some("Guidance Scale:"));
+    let guidance_enable = Switch::new();
+    let guidance_scale = gtk::Scale::new(Orientation::Horizontal, Some(&Adjustment::new(1.0, 0.0, 25.0, 1.0, 1.0, 1.0)));
+    guidance_box.pack_start(&guidance_label, false, false, 5);
+    guidance_enable.set_vexpand(false);
+    guidance_enable.set_halign(gtk::Align::Center); 
+    guidance_enable.set_valign(gtk::Align::Center); 
+    guidance_box.pack_start(&guidance_enable, false, false, 5);
+    guidance_box.pack_start(&guidance_scale, true, true, 5);
+    right_box.attach_next_to(&guidance_box, Some(&switchboard), gtk::PositionType::Bottom, 2, 1);
+
     // Add a label and combobox for version selection
     let label_version = gtk::Label::new(Some("Version:"));
     let combobox = ComboBoxText::new();
     combobox.set_margin_top(5);
     combobox.set_margin_bottom(5);
-    right_box.attach_next_to(&label_version, Some(&switchboard), gtk::PositionType::Bottom, 1, 1);
+    right_box.attach_next_to(&label_version, Some(&guidance_box), gtk::PositionType::Bottom, 1, 1);
     right_box.attach_next_to(&combobox, Some(&label_version), gtk::PositionType::Right, 1, 1);
 
     // Create a spin button to choose the number of samples
@@ -198,11 +211,18 @@ fn build_ui(application: &Application) {
     generate_button.connect_clicked(move |_| {
         spinner.start();
         // &text_view.set_progress_fraction(0.5);
+        // Define a variable typed Option<f64>
+        let guide: Option<f64> = if guidance_enable.state() == true {
+            Some(guidance_scale.digits() as f64)
+        } else {
+            None
+        };
         let prompt: String = text_buffer.text(&text_buffer.start_iter(), &text_buffer.end_iter(), true).unwrap().to_string();
         let f16 = toggle_switch.is_active();
         let cpu = toggle_CPU.is_active();
+        let samples = spin_button.value() as usize;
         let sd_version = get_selected_sd_version(&clone_combo1);
-        generate_image(&prompt, cpu, f16, sd_version);
+        generate_image(&prompt, cpu, f16, sd_version, samples, guide);
         image.set_from_file(Some("groucho.png"));
         spinner.stop();
     });
@@ -261,4 +281,3 @@ fn get_selected_sd_version(combobox: &ComboBoxText) -> StableDiffusionVersion {
         panic!("No version selected!");
     }
 }
-
