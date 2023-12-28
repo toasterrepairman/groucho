@@ -1,11 +1,20 @@
 mod diffusion;
 
 extern crate gtk;
+use gio::glib::clone;
 use gtk::prelude::*;
 use gdk::{keys::constants as key};
 use std::path::Path;
 use gtk::{Application, Spinner, Grid, Switch, ComboBoxText, Popover, ApplicationWindow, MenuButton, Box, Button, Image, TextTagTable, Menu, MenuBar, Adjustment, MenuItem, Orientation, Paned, Separator, SpinButton, TextView, TextBuffer};
 use crate::diffusion::{generate_image, download_weights_for_config, StableDiffusionVersion};
+use std::path::PathBuf;
+use std::fs;
+use gtk::MessageDialog;
+use gtk::MessageType;
+use gtk::FileChooserDialog;
+use gtk::FileChooserAction;
+use gtk::Window;
+use ashpd::desktop::file_chooser::{FileFilter, SelectedFiles};
 
 fn main() {
     // Initialize the GTK application
@@ -24,7 +33,7 @@ fn build_ui(application: &Application) {
     // Create the main application window
     let window = ApplicationWindow::new(application);
     window.set_title("Groucho");
-    window.set_default_size(800, 400);
+    window.set_default_size(800, 512);
 
     // Create a header bar
     let header_bar = gtk::HeaderBar::new();
@@ -81,7 +90,7 @@ fn build_ui(application: &Application) {
     // Create a paned widget to separate the main window horizontally
     let paned = Paned::new(Orientation::Horizontal);
     vbox.pack_start(&paned, true, true, 0);
-    paned.set_position(500);
+    paned.set_position(512);
 
     // Create a scrollable image on the left side of the paned
     let image_scroll = gtk::ScrolledWindow::new(None::<&Adjustment>, None::<&Adjustment>);
@@ -137,7 +146,7 @@ fn build_ui(application: &Application) {
     let guidance_box = gtk::Box::new(Orientation::Horizontal, 0);
     let guidance_label = gtk::Label::new(Some("Guidance Scale:"));
     let guidance_enable = Switch::new();
-    let guidance_scale = gtk::Scale::new(Orientation::Horizontal, Some(&Adjustment::new(1.0, 0.0, 25.0, 1.0, 1.0, 1.0)));
+    let guidance_scale = gtk::Scale::new(Orientation::Horizontal, Some(&Adjustment::new(1.0, 1.0, 26.0, 1.0, 1.0, 1.0)));
     guidance_box.pack_start(&guidance_label, false, false, 5);
     guidance_enable.set_vexpand(false);
     guidance_enable.set_halign(gtk::Align::Center); 
@@ -205,6 +214,13 @@ fn build_ui(application: &Application) {
 
         // Call the function with the selected version and boolean value
         download_weights_for_config(version, is_enabled);
+    });
+
+    // Connect the save_button click event to open a save dialog and copy the file
+    save_button.connect_clicked(move |_| {
+        // Get the parent window of the save_button
+        let parent_window = separator.toplevel().and_then(|toplevel| toplevel.downcast::<Window>().ok());
+        save();
     });
 
     let clone_combo1 = combobox.clone();
@@ -280,4 +296,20 @@ fn get_selected_sd_version(combobox: &ComboBoxText) -> StableDiffusionVersion {
     } else {
         panic!("No version selected!");
     }
+}
+
+async fn save() -> ashpd::Result<()> {
+    let files = SelectedFiles::save_file()
+        .title("open a file to write")
+        .accept_label("write")
+        .current_name("image.png")
+        .modal(true)
+        .filter(FileFilter::new("PNG Image").glob("*.png"))
+        .send()
+        .await?
+        .response()?;
+
+    println!("{:#?}", files);
+
+    Ok(())
 }

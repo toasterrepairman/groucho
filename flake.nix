@@ -40,6 +40,7 @@
                   gtk3.dev
                   gtksourceview5
                   libadwaita
+                  hicolor-icon-theme
                   openssl
                   pandoc
                   pango
