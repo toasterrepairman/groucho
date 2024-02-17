@@ -3,16 +3,19 @@ name = "groucho"
 version = "0.1.0"
 edition = "2021"
 
+[profile.dev]
+opt-level = 3               # Use slightly better optimizations.
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 gtk = "0.17.1"
 gdk = "0.17.1"
 gio = "0.17.10"
-candle = { git = "https://github.com/huggingface/candle.git", version = "0.3.1", package = "candle-core" }
-candle-examples = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
-candle-nn = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
-candle-transformers = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
+candle = { version = "0.3.1", package = "candle-core" }
+candle-examples = { version = "0.3.1" }
+candle-nn = { version = "0.3.1" }
+candle-transformers = { version = "0.3.1" }
 tracing-chrome = "0.7.1"
 tracing-subscriber = "0.3.17"
 clap = "4.4.7"
