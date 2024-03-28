@@ -1,5 +1,7 @@
 # groucho
 
+![A disembodied nose wearing a pair of glasses like Groucho Marx](resources/groucho.png)
+
 ![An application for generating AI images using Stable Diffusion](resources/screenshot.png)
 
 A frontend for Huggingface's `candle` library, written in GTK for Linux desktop clients. 
