@@ -48,8 +48,12 @@
           version = "0.1.0";
           src = ./.; # the folder with the cargo.toml
           nativeBuildInputs = buildInputs;
-          
           cargoLock.lockFile = ./Cargo.lock;
+
+          preBuild = ''
+          install -Dt $out/share/icons resources/groucho.png
+          install -Dt $out/share/applications resources/groucho.desktop
+          '';
         };
 
       in {
@@ -59,11 +63,6 @@
           buildInputs =
             [ (rustVersion.override { extensions = [ "rust-src" ]; }) ];
           };
-
-        installPhase = ''
-          cp ${./resources/groucho.png} $out/share/pixmaps/myapp.png 
-          cp ${./resources/groucho.desktop} $out/share/groucho/groucho.desktop
-        '';
 
         meta = with nixpkgs.lib; {
           description = "groucho";
