@@ -11,7 +11,7 @@ Comment=Generate AI images using your own computer
 Exec=groucho
  
 ## State the name of the icon that will be used to display this entry ##
-Icon=groucho
+Icon=icon-groucho
  
 ## Is it a terminal app? For example htop will be set as Terminal=True ##
 ## Then default terminal app will be used to open the 'htop' ##

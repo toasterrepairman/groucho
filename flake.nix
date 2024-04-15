@@ -51,9 +51,9 @@
           cargoLock.lockFile = ./Cargo.lock;
 
           postBuild = ''
-          install -t $out/share/applications resources/groucho.desktop
+          install -Dt $out/share/applications resources/groucho.desktop
           
-          install -t $out/share/icons resources/icon-groucho.png
+          install -Dt $out/share/icons resources/icon-groucho.png
           '';
         };
 
