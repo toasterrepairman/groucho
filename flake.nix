@@ -11,7 +11,7 @@
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs { inherit system overlays; };
         rustVersion = pkgs.rust-bin.stable.latest.default;
-        buildInputs =
+        packageDeps =
               with pkgs; [
                 openssl.dev
                 rustc
@@ -32,7 +32,6 @@
                 gettext
                 desktop-file-utils
                 meson
-                ninja
                 git
                 wrapGAppsHook4
               ];
@@ -47,19 +46,21 @@
             "groucho"; # make this what ever your cargo.toml package.name is
           version = "0.1.0";
           src = ./.; # the folder with the cargo.toml
-          nativeBuildInputs = buildInputs;
+          nativeBuildInputs = packageDeps;
+          buildInputs = packageDeps;
           cargoLock.lockFile = ./Cargo.lock;
 
-          preBuild = ''
-          install -Dt $out/share/icons resources/groucho.png
-          install -Dt $out/share/applications resources/groucho.desktop
+          postBuild = ''
+          install -t $out/share/applications resources/groucho.desktop
+          
+          install -t $out/share/icons resources/icon-groucho.png
           '';
         };
 
       in {
         defaultPackage = myRustBuild;
         devShell = pkgs.mkShell {
-          nativeBuildInputs = buildInputs;
+          nativeBuildInputs = packageDeps;
           buildInputs =
             [ (rustVersion.override { extensions = [ "rust-src" ]; }) ];
           };
