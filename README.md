@@ -8,7 +8,7 @@ A frontend for Huggingface's `candle` library, written in GTK for Linux desktop 
 
 ## Getting Started
 
-`nix run .` will compile and run the program locally. `nix profile install .` will install the app to your system with a desktop entry hooked through Nix. 
+`nix run .` will compile and run the program locally. `nix profile install .` will install the app to your system with a desktop entry through Nix. 
 
 ## How it works
 
