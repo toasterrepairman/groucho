@@ -75,7 +75,7 @@ fn build_ui(application: &Application) {
     
     // Add the button to the header bar (or wherever you want)
     header_bar.pack_end(&menu_button);
-        
+    
     // Connect the popover to the button
     menu_button.connect_clicked(move |_| {
         popover.show_all();
