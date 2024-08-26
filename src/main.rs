@@ -5,7 +5,8 @@ use gio::glib::clone;
 use gtk::prelude::*;
 use gdk::{keys::constants as key};
 use std::path::Path;
-use gtk::{Application, Spinner, Grid, Switch, ComboBoxText, Popover, ApplicationWindow, MenuButton, Box, Button, Image, TextTagTable, Menu, MenuBar, Adjustment, MenuItem, Orientation, Paned, Separator, SpinButton, TextView, TextBuffer};
+use gtk::{Application, Spinner, Grid, Switch, ComboBoxText, Popover, ApplicationWindow, MenuButton, Box, Button, Image, TextTagTable, 
+    Menu, MenuBar, Adjustment, MenuItem, Orientation, Paned, Separator, SpinButton, TextView, TextBuffer};
 use crate::diffusion::{generate_image, download_weights_for_config, StableDiffusionVersion};
 use std::path::PathBuf;
 use std::fs;
